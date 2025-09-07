@@ -4,8 +4,10 @@ import com.library.bookclub.entity.Book;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookDto {
@@ -13,11 +15,13 @@ public class BookDto {
     private String bookName;
     private String genre;
     private String author;
+    private String imageName;
 
     public BookDto(Book book){
         this.bookId = book.getBookId();
         this.bookName = book.getBookName();
         this.genre = book.getGenre();
         this.author = book.getAuthor();
+        this.imageName = book.getImageName();
     }
 }

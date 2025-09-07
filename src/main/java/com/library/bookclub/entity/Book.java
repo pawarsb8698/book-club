@@ -27,11 +27,14 @@ public class Book {
     private String bookName;
     private String genre;
     private String author;
+    @Column(name="image_name")
+    private String imageName;
 
     public Book(BookDto bookDto) {
         this.bookId = bookDto.getBookId();
         this.bookName = bookDto.getBookName();
         this.genre = bookDto.getGenre();
         this.author = bookDto.getAuthor();
+        this.imageName = bookDto.getImageName();
     }
 }
