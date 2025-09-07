@@ -2,10 +2,10 @@ package com.library.bookclub.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,29 +20,40 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        if (header != null) {
-            String[] authElements = header.split(" ");
+        String token = extractTokenFromCookies(request);
 
-            if (authElements.length == 2
-                    && "Bearer".equals(authElements[0])) {
-                try {
-                    if ("GET".equals(request.getMethod())) {
-                        SecurityContextHolder.getContext().setAuthentication(
-                                userAuthenticationProvider.validateToken(authElements[1]));
-                    } else {
-                        SecurityContextHolder.getContext().setAuthentication(
-                                userAuthenticationProvider.validateTokenStrongly(authElements[1]));
-                    }
-                } catch (RuntimeException e) {
-                    SecurityContextHolder.clearContext();
-                    throw e;
+        if (token != null) {
+            try {
+                if ("GET".equalsIgnoreCase(request.getMethod())) {
+                    SecurityContextHolder.getContext().setAuthentication(
+                            userAuthenticationProvider.validateToken(token)
+                    );
+                } else {
+                    SecurityContextHolder.getContext().setAuthentication(
+                            userAuthenticationProvider.validateTokenStrongly(token)
+                    );
                 }
+            } catch (RuntimeException e) {
+                SecurityContextHolder.clearContext();
+                // Optional: log the exception
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractTokenFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+
+        for (Cookie cookie : cookies) {
+            if ("jwt".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }
