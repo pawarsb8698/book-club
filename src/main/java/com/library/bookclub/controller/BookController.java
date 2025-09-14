@@ -26,7 +26,7 @@ import java.util.List;
 @RequestMapping("/api/books")
 @AllArgsConstructor
 public class BookController {
-    private static final String UPLOAD_DIR = "D:\\bookClubUploads";
+    private static final String UPLOAD_DIR = "/home/vishal/2025/BookClub/books_images";
     private BookService bookService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -85,7 +85,7 @@ public class BookController {
                                               @RequestPart(value = "file", required = false) MultipartFile file) {
         BookDto bookDto = bookService.updateBook(bookId, updatedBookDto);
         try {
-            saveFileToFolder(file, bookId);
+            saveFileToFolder(file, bookDto.getBookId());
         } catch (IOException e) {
             return ResponseEntity.ok(updatedBookDto);
         }
@@ -117,7 +117,7 @@ public class BookController {
 
     @GetMapping("/images/{filename}")
     public ResponseEntity<byte[]> getImage(@PathVariable String filename) throws IOException {
-        Path path = Paths.get("D:\\bookClubUploads").resolve(filename);
+        Path path = Paths.get(UPLOAD_DIR).resolve(filename);
         byte[] image = Files.readAllBytes(path);
 
         String contentType = Files.probeContentType(path);

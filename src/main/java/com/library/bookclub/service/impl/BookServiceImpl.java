@@ -27,9 +27,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDto getBookById(Integer bookId) {
-       Book book = bookRepository.findById(bookId).orElseThrow(
-               ()->new ResourceNotFoundException("Book not Found"));
-       return new BookDto(book);
+        Book book = bookRepository.findById(bookId).orElseThrow(
+                () -> new ResourceNotFoundException("Book not Found"));
+        return new BookDto(book);
     }
 
     @Override
@@ -41,8 +41,11 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDto updateBook(Integer bookId, BookDto updatedBookDto) {
-        Book book = new Book(updatedBookDto);
-        return new BookDto(bookRepository.save(book));
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+        Book updatedBook = new Book(updatedBookDto);
+        updatedBook.setImageName(book.getImageName());
+        return new BookDto(bookRepository.save(updatedBook));
     }
 
     @Override
