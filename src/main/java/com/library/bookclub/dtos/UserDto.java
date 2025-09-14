@@ -1,5 +1,6 @@
 package com.library.bookclub.dtos;
 
+import com.library.bookclub.enums.UserType;
 import lombok.*;
 
 @Getter
@@ -14,5 +15,6 @@ public class UserDto {
     private String lastName;
     private String login;
     private String token;
+    private UserType userType;
 
 }

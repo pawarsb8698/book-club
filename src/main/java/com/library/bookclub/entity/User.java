@@ -1,5 +1,6 @@
 package com.library.bookclub.entity;
 
+import com.library.bookclub.enums.UserType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,4 +27,8 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "user_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserType userType;
 }

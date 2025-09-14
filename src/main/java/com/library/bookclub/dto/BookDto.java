@@ -6,16 +6,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookDto {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private Integer bookId;
     private String bookName;
     private String genre;
     private String author;
+    private String owner;
+    private String description;
     private String imageName;
+    private boolean isBorrowed;
+    private String borrowedDate;
+    private String returnDueDate;
 
     public BookDto(Book book){
         this.bookId = book.getBookId();
@@ -23,5 +33,11 @@ public class BookDto {
         this.genre = book.getGenre();
         this.author = book.getAuthor();
         this.imageName = book.getImageName();
+        this.isBorrowed = book.isBorrowed();
+        this.owner = book.getOwner();
+        this.description = book.getDescription();
+        this.borrowedDate = (book.getBorrowedDate() != null) ? book.getBorrowedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+        this.returnDueDate = (book.getReturnDueDate() != null) ? book.getReturnDueDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+
     }
 }

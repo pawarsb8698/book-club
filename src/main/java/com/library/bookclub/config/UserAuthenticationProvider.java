@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.library.bookclub.dtos.UserDto;
+import com.library.bookclub.enums.UserType;
 import com.library.bookclub.services.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
@@ -34,7 +36,7 @@ public class UserAuthenticationProvider {
 
     public String createToken(UserDto user) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 360000); // 1 hour
+        Date validity = new Date(now.getTime() + 3600000); // 1 hour
 
         Algorithm algorithm = Algorithm.HMAC256(secretKey);
         return JWT.create()
@@ -43,6 +45,7 @@ public class UserAuthenticationProvider {
                 .withExpiresAt(validity)
                 .withClaim("firstName", user.getFirstName())
                 .withClaim("lastName", user.getLastName())
+                .withClaim("userType", user.getUserType().name())
                 .sign(algorithm);
     }
 
@@ -58,9 +61,10 @@ public class UserAuthenticationProvider {
                 .login(decoded.getSubject())
                 .firstName(decoded.getClaim("firstName").asString())
                 .lastName(decoded.getClaim("lastName").asString())
+                .userType(UserType.valueOf(decoded.getClaim("userType").asString()))
                 .build();
 
-        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken(user, null, Collections.singletonList(user.getUserType()));
     }
 
     public Authentication validateTokenStrongly(String token) {
@@ -72,8 +76,7 @@ public class UserAuthenticationProvider {
         DecodedJWT decoded = verifier.verify(token);
 
         UserDto user = userService.findByLogin(decoded.getSubject());
-
-        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken(user, null,  Collections.singletonList(user.getUserType()));
     }
 
 }

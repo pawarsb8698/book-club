@@ -41,13 +41,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDto updateBook(Integer bookId, BookDto updatedBookDto) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Book not found"));
-        book.setBookName(updatedBookDto.getBookName());
-        book.setAuthor(updatedBookDto.getAuthor());
-        book.setGenre(updatedBookDto.getGenre());
-        book.setImageName(updatedBookDto.getImageName());
+        Book book = new Book(updatedBookDto);
         return new BookDto(bookRepository.save(book));
     }
 

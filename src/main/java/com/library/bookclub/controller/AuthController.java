@@ -38,7 +38,7 @@ public class AuthController {
 
         response.setHeader("Set-Cookie", cookie.toString());
 
-        userDto.setToken(null); // Don't send token in body anymore
+        userDto.setToken(token); // Don't send token in body anymore
         return ResponseEntity.ok(userDto);
     }
 
@@ -47,6 +47,7 @@ public class AuthController {
                                             HttpServletResponse response) {
         UserDto createdUser = userService.register(user);
         String token = userAuthenticationProvider.createToken(createdUser);
+        createdUser.setToken(token);
 
         // Set cookie
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
@@ -58,8 +59,6 @@ public class AuthController {
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());
-
-        createdUser.setToken(null);
         return ResponseEntity.created(URI.create("/users/" + createdUser.getId())).body(createdUser);
     }
 
