@@ -4,16 +4,13 @@ package com.library.bookclub.controller;
 import com.library.bookclub.dto.UserListDto;
 import com.library.bookclub.enums.UserType;
 import com.library.bookclub.services.UserService;
-import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @CrossOrigin("*")
 @RestController
@@ -26,7 +23,7 @@ public class UsersController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPERUSER')")
     public ResponseEntity<List<UserListDto>> getUsers() {
-        List<UserListDto> users = new ArrayList<>(userService.getAllUsers());
+        List<UserListDto> users = new ArrayList<>(userService.getAllUsersExceptSuperUser());
         return ResponseEntity.ok(users);
     }
 

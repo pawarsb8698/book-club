@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -47,15 +46,12 @@ public class UserService {
         if (optionalUser.isPresent()) {
             throw new AppException("Login already exists", HttpStatus.BAD_REQUEST);
         }
-
         User user = userMapper.signUpToUser(userDto);
-        if(getAllUsers().isEmpty()){
+        if (getAllUsers().isEmpty()) {
             user.setUserType(UserType.SUPERUSER);
         }
         user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.password())));
-
         User savedUser = userRepository.save(user);
-
         return userMapper.toUserDto(savedUser);
     }
 
@@ -65,7 +61,7 @@ public class UserService {
         return userMapper.toUserDto(user);
     }
 
-    public List<UserListDto> getAllUsers() {
+    public List<UserListDto> getAllUsersExceptSuperUser() {
         return userRepository.findAll().stream()
                 .filter(user -> !user.getUserType().equals(UserType.SUPERUSER))
                 .map(UserListDto::new)
@@ -86,4 +82,11 @@ public class UserService {
         user.setAvailable(isAvailable);
         userRepository.save(user);
     }
+
+    private List<UserListDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserListDto::new)
+                .toList();
+    }
+
 }
