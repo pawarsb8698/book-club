@@ -27,7 +27,7 @@ import java.util.List;
 @RequestMapping("/api/books")
 @AllArgsConstructor
 public class BookController {
-    private static final String UPLOAD_DIR = "/home/vishal/2025/BookClub/books_images";
+    private static final String UPLOAD_DIR = "D:\\bookClubUploads";
     private BookService bookService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -120,9 +120,7 @@ public class BookController {
     public ResponseEntity<byte[]> getImage(@PathVariable String filename) throws IOException {
         Path path = Paths.get(UPLOAD_DIR).resolve(filename);
         byte[] image = Files.readAllBytes(path);
-
         String contentType = Files.probeContentType(path);
-
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(image);

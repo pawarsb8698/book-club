@@ -31,4 +31,7 @@ public class User {
     @Column(name = "user_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserType userType;
+
+    @Column(name= "is_available", columnDefinition = "boolean default true")
+    private boolean isAvailable;
 }

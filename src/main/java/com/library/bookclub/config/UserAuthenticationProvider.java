@@ -46,6 +46,7 @@ public class UserAuthenticationProvider {
                 .withClaim("firstName", user.getFirstName())
                 .withClaim("lastName", user.getLastName())
                 .withClaim("userType", user.getUserType().name())
+                .withClaim("userId", user.getLogin())
                 .sign(algorithm);
     }
 
