@@ -4,6 +4,7 @@ import com.library.bookclub.dto.BookDto;
 import com.library.bookclub.service.BookService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,31 +52,31 @@ public class BookController {
         return ResponseEntity.ok(bookDto);
     }
 
-
     @GetMapping
-    public ResponseEntity<List<BookDto>> getAllBooks() {
-        List<BookDto> books = bookService.getAllBooks();
-        return ResponseEntity.ok(books);
+    public Page<BookDto> listBooks(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "8") int numberOfBooksPerPage) {
+        return bookService.getAllBooks(pageNumber, numberOfBooksPerPage);
     }
 
     @GetMapping("/borrow/{id}")
-    public ResponseEntity<List<BookDto>> borrowBook(@PathVariable("id") Integer bookId) {
+    public ResponseEntity<BookDto> borrowBook(@PathVariable("id") Integer bookId) {
         BookDto bookDto = bookService.getBookById(bookId);
         bookDto.setBorrowed(true);
         bookDto.setBorrowedDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         bookDto.setReturnDueDate(LocalDate.now().plusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        bookService.updateBook(bookId, bookDto);
-        return getAllBooks();
+        BookDto borrowedBook = bookService.updateBook(bookId, bookDto);
+        return ResponseEntity.ok(borrowedBook);
     }
 
     @GetMapping("/return/{id}")
-    public ResponseEntity<List<BookDto>> returnBook(@PathVariable("id") Integer bookId) {
+    public ResponseEntity<BookDto> returnBook(@PathVariable("id") Integer bookId) {
         BookDto bookDto = bookService.getBookById(bookId);
         bookDto.setBorrowed(false);
         bookDto.setBorrowedDate(null);
         bookDto.setReturnDueDate(null);
-        bookService.updateBook(bookId, bookDto);
-        return getAllBooks();
+        BookDto returnedBook = bookService.updateBook(bookId, bookDto);
+        return ResponseEntity.ok(returnedBook);
     }
 
     @PutMapping("{id}")

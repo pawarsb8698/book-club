@@ -6,6 +6,8 @@ import com.library.bookclub.exception.ResourceNotFoundException;
 import com.library.bookclub.repository.BookRepository;
 import com.library.bookclub.service.BookService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,10 +35,9 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<BookDto> getAllBooks() {
-        return bookRepository.findAll().stream()
-                .map(BookDto::new)
-                .collect(Collectors.toList());
+    public Page<BookDto> getAllBooks(int page, int size) {
+        return bookRepository.findAll(PageRequest.of(page, size))
+                .map(BookDto::new);
     }
 
     @Override
