@@ -2,6 +2,7 @@ package com.library.bookclub.entity;
 
 import ch.qos.logback.core.util.StringUtil;
 import com.library.bookclub.dto.BookDto;
+import com.library.bookclub.enums.BookStatus;
 import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -36,8 +37,9 @@ public class Book {
     private String author;
     @Column(name = "image_name", nullable = false)
     private String imageName;
-    @Column(name = "is_borrowed", nullable = false)
-    private boolean isBorrowed;
+    @Column(name = "book_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private BookStatus bookStatus;
     @Column(nullable = false)
     private String owner;
     @Column(nullable = false)
@@ -53,7 +55,7 @@ public class Book {
         this.genre = bookDto.getGenre();
         this.author = bookDto.getAuthor();
         this.imageName = bookDto.getImageName();
-        this.isBorrowed = bookDto.isBorrowed();
+        this.bookStatus = BookStatus.valueOf(bookDto.getBookStatus());
         this.owner = bookDto.getOwner();
         this.description = bookDto.getDescription();
         this.borrowedDate = StringUtils.isNotBlank(bookDto.getBorrowedDate())

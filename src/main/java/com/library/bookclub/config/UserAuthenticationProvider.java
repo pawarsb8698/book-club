@@ -43,6 +43,7 @@ public class UserAuthenticationProvider {
                 .withSubject(user.getLogin())
                 .withIssuedAt(now)
                 .withExpiresAt(validity)
+                .withClaim("id", user.getId())
                 .withClaim("firstName", user.getFirstName())
                 .withClaim("lastName", user.getLastName())
                 .withClaim("userType", user.getUserType().name())
@@ -60,6 +61,7 @@ public class UserAuthenticationProvider {
 
         UserDto user = UserDto.builder()
                 .login(decoded.getSubject())
+                .id(decoded.getClaim("id").asInt())
                 .firstName(decoded.getClaim("firstName").asString())
                 .lastName(decoded.getClaim("lastName").asString())
                 .userType(UserType.valueOf(decoded.getClaim("userType").asString()))

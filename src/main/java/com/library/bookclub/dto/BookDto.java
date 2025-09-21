@@ -1,6 +1,7 @@
 package com.library.bookclub.dto;
 
 import com.library.bookclub.entity.Book;
+import com.library.bookclub.enums.BookStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,7 @@ public class BookDto {
     private String owner;
     private String description;
     private String imageName;
-    private boolean isBorrowed;
+    private String bookStatus;
     private String borrowedDate;
     private String returnDueDate;
 
@@ -33,7 +34,7 @@ public class BookDto {
         this.genre = book.getGenre();
         this.author = book.getAuthor();
         this.imageName = book.getImageName();
-        this.isBorrowed = book.isBorrowed();
+        this.bookStatus = book.getBookStatus().name();
         this.owner = book.getOwner();
         this.description = book.getDescription();
         this.borrowedDate = (book.getBorrowedDate() != null) ? book.getBorrowedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
