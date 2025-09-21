@@ -7,6 +7,7 @@ import com.library.bookclub.entity.BookApproval;
 import com.library.bookclub.repository.BookApprovalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -20,9 +21,9 @@ public class BookApprovalService {
 
     }
 
+    @Transactional
     public void deleteApprovalByUserId(int userId){
         bookApprovalRepository.deleteByUserId(userId);
-
     }
 
     public BookApprovalDto findByUserId(int userId){

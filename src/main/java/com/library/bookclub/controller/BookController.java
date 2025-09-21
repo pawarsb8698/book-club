@@ -187,4 +187,26 @@ public class BookController {
         }
         return ResponseEntity.ok(bookDto);
     }
+
+    @GetMapping("/withdrawApproval")
+    public ResponseEntity<String> withdrawApproval(Authentication authentication) {
+        UserDto currentUser = (UserDto) authentication.getPrincipal();
+        int bookId = bookApprovalService.findByUserId(currentUser.getId()).getBookId();
+        bookApprovalService.deleteApprovalByUserId(currentUser.getId());
+        BookDto bookDto = bookService.getBookById(bookId);
+        bookDto.setBookStatus(BookStatus.AVAILABLE.name());
+        bookService.updateBook(bookDto.getBookId(), bookDto);
+        return new ResponseEntity<>("Withdrawn Successfully!", HttpStatus.CREATED);
+    }
+
+    @GetMapping("/approvals")
+    public ResponseEntity<String> withdrawApproval(Authentication authentication) {
+        UserDto currentUser = (UserDto) authentication.getPrincipal();
+        int bookId = bookApprovalService.findByUserId(currentUser.getId()).getBookId();
+        bookApprovalService.deleteApprovalByUserId(currentUser.getId());
+        BookDto bookDto = bookService.getBookById(bookId);
+        bookDto.setBookStatus(BookStatus.AVAILABLE.name());
+        bookService.updateBook(bookDto.getBookId(), bookDto);
+        return new ResponseEntity<>("Withdrawn Successfully!", HttpStatus.CREATED);
+    }
 }
