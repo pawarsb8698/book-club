@@ -2,6 +2,7 @@ package com.library.bookclub.entity;
 
 import com.library.bookclub.dto.BookApprovalDto;
 import com.library.bookclub.dto.BookHistoryDto;
+import com.library.bookclub.enums.BookStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,10 +28,15 @@ public class BookApproval {
     @Column(name = "user_id")
     private int userId;
 
+    @Column(name = "book_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private BookStatus bookStatus;
+
     public BookApproval(BookApprovalDto bookApprovalDto){
         this.bookApprovalId =bookApprovalDto.getBookApprovalId();
         this.bookId = bookApprovalDto.getBookId();
         this.userId = bookApprovalDto.getUserId();
+        this.bookStatus = bookApprovalDto.getBookStatus();
 
     }
 }

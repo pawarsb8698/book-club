@@ -1,17 +1,12 @@
 package com.library.bookclub.controller;
 
-import com.library.bookclub.dto.BookApprovalDto;
-import com.library.bookclub.dto.BookDto;
-import com.library.bookclub.dto.BookHistoryDto;
+import com.library.bookclub.dto.*;
 import com.library.bookclub.dtos.UserDto;
 import com.library.bookclub.enums.BookStatus;
 import com.library.bookclub.service.BookService;
 import com.library.bookclub.services.BookApprovalService;
 import com.library.bookclub.services.BookHistoryService;
-import io.micrometer.common.util.StringUtils;
-import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
-import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +24,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -63,10 +60,27 @@ public class BookController {
     }
 
     @GetMapping
-    public Page<BookDto> listBooks(
+    public
+    ResponseEntity<BookListResponse> listBooks(
             @RequestParam(defaultValue = "0") int pageNumber,
-            @RequestParam(defaultValue = "8") int numberOfBooksPerPage) {
-        return bookService.getAllBooks(pageNumber, numberOfBooksPerPage);
+            @RequestParam(defaultValue = "8") int numberOfBooksPerPage, Authentication authentication) {
+        UserDto currentUser = (UserDto) authentication.getPrincipal();
+        boolean hasBorrrowedBook;
+        BookApprovalDto bookApprovalDto = bookApprovalService.findByUserId(currentUser.getId());
+        if(bookApprovalDto!=null){
+            hasBorrrowedBook = true;
+        } else {
+            List<BookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
+            Collections.reverse(userBookHistory);
+            BookHistoryDto bookHistoryDto = userBookHistory.stream()
+                    .findFirst()
+                    .orElse(null);
+            hasBorrrowedBook = bookHistoryDto != null && (bookHistoryDto.getBookStatus().equals(BookStatus.BORROWED) ||
+                    bookHistoryDto.getBookStatus().equals(BookStatus.RETURN_PENDING) ||
+                    bookHistoryDto.getBookStatus().equals(BookStatus.BORROW_PENDING));
+        }
+        Page<BookDto> books = bookService.getAllBooks(pageNumber, numberOfBooksPerPage);
+        return ResponseEntity.ok(new BookListResponse(books, hasBorrrowedBook));
     }
 
     @GetMapping("/borrow/{id}")
@@ -76,21 +90,26 @@ public class BookController {
         if (!bookDto.getBookStatus().equals(BookStatus.AVAILABLE.name())) {
             throw new RuntimeException("Book is unavailable.");
         }
-        bookDto.setBookStatus(BookStatus.PENDING_APPROVAL.name());
+        bookDto.setBookStatus(BookStatus.BORROW_PENDING.name());
         bookDto.setBorrowedDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         bookDto.setReturnDueDate(LocalDate.now().plusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         BookDto borrowedBook = bookService.updateBook(bookId, bookDto);
-        bookApprovalService.saveBookApproval(new BookApprovalDto(null, bookId, currentUser.getId()));
+        bookApprovalService.saveBookApproval(new BookApprovalDto(null, bookId, currentUser.getId(), BookStatus.BORROW_PENDING));
+        bookHistoryService.saveBookHistory(borrowedBook, null, currentUser.getId());
         return ResponseEntity.ok(borrowedBook);
     }
 
     @GetMapping("/return/{id}")
-    public ResponseEntity<BookDto> returnBook(@PathVariable("id") Integer bookId) {
+    public ResponseEntity<BookDto> returnBook(@PathVariable("id") int bookId, Authentication authentication) {
+        UserDto currentUser = (UserDto) authentication.getPrincipal();
         BookDto bookDto = bookService.getBookById(bookId);
-        bookDto.setBookStatus(BookStatus.AVAILABLE.name());
+        bookDto.setBookStatus(BookStatus.RETURN_PENDING.name());
         bookDto.setBorrowedDate(null);
         bookDto.setReturnDueDate(null);
         BookDto returnedBook = bookService.updateBook(bookId, bookDto);
+        bookApprovalService.saveBookApproval(new BookApprovalDto(null, bookId, currentUser.getId(),
+                BookStatus.RETURN_PENDING));
+        bookHistoryService.saveBookHistory(returnedBook, null, currentUser.getId());
         return ResponseEntity.ok(returnedBook);
     }
 
@@ -142,33 +161,35 @@ public class BookController {
     }
 
     @GetMapping("/approve/{id}")
-    public ResponseEntity<String> approveBookRequest(@PathVariable("id") Integer borrowedByUserId, Authentication authentication) {
+    public ResponseEntity<List<BookApprovalResponseDto>> approveBookRequest(@PathVariable("id") int approvalId, Authentication authentication) {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
-        BookApprovalDto bookApprovalDto = bookApprovalService.findByUserId(borrowedByUserId);
+        BookApprovalDto bookApprovalDto = bookApprovalService.findById(approvalId);
         BookDto bookDto = bookService.getBookById(bookApprovalDto.getBookId());
-        if (!bookDto.getBookStatus().equals(BookStatus.AVAILABLE.name())) {
+        bookApprovalService.deleteById(approvalId);
+        if (!bookDto.getBookStatus().equals(BookStatus.BORROW_PENDING.name())) {
             throw new RuntimeException("Book isn't available");
         }
         bookDto.setBookStatus(BookStatus.BORROWED.name());
         bookDto.setBorrowedDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         bookDto.setReturnDueDate(LocalDate.now().plusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        bookHistoryService.saveBookHistory(bookDto, currentUser.getId(), borrowedByUserId);
-        return new ResponseEntity<>("Resource not found!", HttpStatus.NOT_FOUND);
+        bookHistoryService.saveBookHistory(bookDto, currentUser.getId(), bookApprovalDto.getUserId());
+        return getApprovals();
     }
 
     @GetMapping("/reject/{id}")
-    public ResponseEntity<String> rejectBookRequest(@PathVariable("id") Integer borrowedByUserId, Authentication authentication) {
+    public ResponseEntity<List<BookApprovalResponseDto>> rejectBookRequest(@PathVariable("id") Integer approvalId, Authentication authentication) {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
-        BookApprovalDto bookApprovalDto = bookApprovalService.findByUserId(borrowedByUserId);
+        BookApprovalDto bookApprovalDto = bookApprovalService.findById(approvalId);
+        bookApprovalService.deleteById(approvalId);
         BookDto bookDto = bookService.getBookById(bookApprovalDto.getBookId());
-        if (!bookDto.getBookStatus().equals(BookStatus.AVAILABLE.name())) {
+        if (!bookDto.getBookStatus().equals(BookStatus.BORROW_PENDING.name())) {
             throw new RuntimeException("Book isn't available");
         }
         bookDto.setBookStatus(BookStatus.AVAILABLE.name());
-        bookDto.setBorrowedDate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        bookDto.setReturnDueDate(LocalDate.now().plusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        bookHistoryService.saveBookHistory(bookDto, currentUser.getId(), borrowedByUserId);
-        return new ResponseEntity<>("Resource not found!", HttpStatus.NOT_FOUND);
+        bookDto.setBorrowedDate(null);
+        bookDto.setReturnDueDate(null);
+        bookHistoryService.saveBookHistory(bookDto, currentUser.getId(), bookApprovalDto.getUserId());
+        return getApprovals();
     }
 
     @GetMapping("/borrowedBook")
@@ -176,12 +197,14 @@ public class BookController {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
         BookApprovalDto bookApprovalDto = bookApprovalService.findByUserId(currentUser.getId());
         BookDto bookDto;
-        if(bookApprovalDto == null) {
-            BookHistoryDto bookHistoryDto =
-        bookHistoryService.getBookByUserId(currentUser.getId()).stream()
-                    .filter(b -> StringUtils.isBlank(b.getActualReturnDate())) // replace with your status
-                    .findFirst().orElse(null);
-            bookDto = bookHistoryDto == null ? null: bookService.getBookById(bookHistoryDto.getBorrowedBookId());
+        if (bookApprovalDto == null) {
+            List<BookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
+            Collections.reverse(userBookHistory);
+            BookHistoryDto bookHistoryDto = userBookHistory.stream()
+                            .findFirst()
+                            .filter(history -> !history.getBookStatus().equals(BookStatus.AVAILABLE))
+                            .orElse(null);
+            bookDto = bookHistoryDto == null ? null : bookService.getBookById(bookHistoryDto.getBorrowedBookId());
         } else {
             bookDto = bookService.getBookById(bookApprovalDto.getBookId());
         }
@@ -194,19 +217,52 @@ public class BookController {
         int bookId = bookApprovalService.findByUserId(currentUser.getId()).getBookId();
         bookApprovalService.deleteApprovalByUserId(currentUser.getId());
         BookDto bookDto = bookService.getBookById(bookId);
+        bookDto.setBorrowedDate(null);
+        bookDto.setReturnDueDate(null);
         bookDto.setBookStatus(BookStatus.AVAILABLE.name());
         bookService.updateBook(bookDto.getBookId(), bookDto);
+        bookHistoryService.saveBookHistory(bookDto, null, currentUser.getId());
         return new ResponseEntity<>("Withdrawn Successfully!", HttpStatus.CREATED);
     }
 
-    @GetMapping("/approvals")
-    public ResponseEntity<String> withdrawApproval(Authentication authentication) {
+    @GetMapping("/getApprovals")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<BookApprovalResponseDto>> getApprovals() {
+        List<Object[]> rows = bookApprovalService.getBookApprovals();
+
+        List<BookApprovalResponseDto> approvals = rows.stream()
+                .map(r -> new BookApprovalResponseDto(
+                        ((Number) r[0]).longValue(),  // approval id
+                        (String) r[1],                // userName
+                        (String) r[2],                // bookName
+                        (String) r[3],                // status
+                        (String) r[4],
+                        (Long) r[5]))     // userId
+                .toList();
+
+        return ResponseEntity.ok(approvals);
+    }
+
+    @GetMapping("/acceptReturn/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<BookApprovalResponseDto>> acceptReturn(@PathVariable("id")int approvalId,
+                                                                      Authentication authentication) {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
-        int bookId = bookApprovalService.findByUserId(currentUser.getId()).getBookId();
-        bookApprovalService.deleteApprovalByUserId(currentUser.getId());
-        BookDto bookDto = bookService.getBookById(bookId);
+        BookApprovalDto bookApprovalDto = bookApprovalService.findById(approvalId);
+        bookApprovalService.deleteById(approvalId);
+        BookDto bookDto = bookService.getBookById(bookApprovalDto.getBookId());
+        if (!bookDto.getBookStatus().equals(BookStatus.RETURN_PENDING.name())) {
+            throw new RuntimeException("Book isn't available");
+        }
         bookDto.setBookStatus(BookStatus.AVAILABLE.name());
-        bookService.updateBook(bookDto.getBookId(), bookDto);
-        return new ResponseEntity<>("Withdrawn Successfully!", HttpStatus.CREATED);
+        bookDto.setBorrowedDate(null);
+        bookDto.setReturnDueDate(null);
+        bookHistoryService.saveBookHistory(bookDto, currentUser.getId(), bookApprovalDto.getUserId());
+        return getApprovals();
+    }
+
+    public void getUserHistory(Authentication authentication) {
+        UserDto currentUser = (UserDto) authentication.getPrincipal();
+        List<BookHistoryDto> bookHistoryDtos = bookHistoryService.getBooksByUserId(currentUser.getId());
     }
 }

@@ -2,12 +2,14 @@ package com.library.bookclub.services;
 
 
 import com.library.bookclub.dto.BookApprovalDto;
-import com.library.bookclub.dto.BookHistoryDto;
 import com.library.bookclub.entity.BookApproval;
 import com.library.bookclub.repository.BookApprovalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -22,13 +24,25 @@ public class BookApprovalService {
     }
 
     @Transactional
-    public void deleteApprovalByUserId(int userId){
+    public void deleteApprovalByUserId(int userId) {
         bookApprovalRepository.deleteByUserId(userId);
     }
 
-    public BookApprovalDto findByUserId(int userId){
-       return new BookApprovalDto(bookApprovalRepository.findByUserId(userId));
-
+    @Transactional
+    public void deleteById(int approvalId) {
+        bookApprovalRepository.deleteById(approvalId);
     }
 
+    public BookApprovalDto findByUserId(int userId) {
+        Optional<BookApproval> optionalApproval = bookApprovalRepository.findByUserId(userId);
+        return optionalApproval.map(BookApprovalDto::new).orElse(null);
+    }
+
+    public BookApprovalDto findById(int approvalId) {
+        return new BookApprovalDto(bookApprovalRepository.findById(approvalId).get());
+    }
+
+    public List<Object[]> getBookApprovals() {
+        return bookApprovalRepository.findAllApprovals();
+    }
 }

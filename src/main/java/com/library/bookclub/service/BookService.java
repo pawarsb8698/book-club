@@ -3,7 +3,6 @@ package com.library.bookclub.service;
 import com.library.bookclub.dto.BookDto;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
 
 public interface BookService {
     BookDto createBook(BookDto bookDto);

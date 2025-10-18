@@ -2,7 +2,8 @@ package com.library.bookclub.enums;
 
 public enum BookStatus {
 
-    PENDING_APPROVAL,
+    BORROW_PENDING,
+    RETURN_PENDING,
     BORROWED,
     AVAILABLE,
     NOT_AVAILABLE;

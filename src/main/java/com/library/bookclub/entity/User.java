@@ -1,5 +1,6 @@
 package com.library.bookclub.entity;
 
+import com.library.bookclub.dtos.UserDto;
 import com.library.bookclub.enums.UserType;
 import jakarta.persistence.*;
 import lombok.*;

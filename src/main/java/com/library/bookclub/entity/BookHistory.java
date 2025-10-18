@@ -1,6 +1,7 @@
 package com.library.bookclub.entity;
 
 import com.library.bookclub.dto.BookHistoryDto;
+import com.library.bookclub.enums.BookStatus;
 import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -30,17 +31,21 @@ public class BookHistory {
     @Column(name = "user_id", nullable = false)
     private int userId;
 
-    @Column(name = "borrowed_book_date", nullable = false)
+    @Column(name = "borrowed_book_date")
     private LocalDate borrowedBookDate;
 
-    @Column(name = "return_due_date", nullable = false)
+    @Column(name = "return_due_date")
     private LocalDate returnDueDate;
 
     @Column(name = "actual_return_due_date")
     private LocalDate actualReturnDate;
 
-    @Column(name = "approved_by_user_id", nullable = false)
-    private int approvedByUserId;
+    @Column(name = "approved_by_user_id")
+    private Integer approvedByUserId;
+
+    @Column(name = "book_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private BookStatus bookStatus;
 
     private String notes;
 
@@ -58,5 +63,6 @@ public class BookHistory {
                 : null;
         this.notes = bookHistoryDto.getNotes();
         this.userId = bookHistoryDto.getUserId();
+        this.bookStatus = bookHistoryDto.getBookStatus();
     }
 }
