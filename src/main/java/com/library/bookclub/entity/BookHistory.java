@@ -1,6 +1,6 @@
 package com.library.bookclub.entity;
 
-import com.library.bookclub.dto.BookHistoryDto;
+import com.library.bookclub.dto.UserBookHistoryDto;
 import com.library.bookclub.enums.BookStatus;
 import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.*;
@@ -25,11 +25,13 @@ public class BookHistory {
     @Column(name = "book_history_id")
     private int bookHistoryId;
 
-    @Column(name = "borrowed_book_id", nullable = false)
-    private int borrowedBookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "borrowed_book_id")
+    private Book book;
 
-    @Column(name = "user_id", nullable = false)
-    private int userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_user_id", nullable = false)
+    private BookUser bookUser;
 
     @Column(name = "borrowed_book_date")
     private LocalDate borrowedBookDate;
@@ -49,20 +51,20 @@ public class BookHistory {
 
     private String notes;
 
-    public BookHistory(BookHistoryDto bookHistoryDto) {
-        this.actualReturnDate = StringUtils.isNotBlank(bookHistoryDto.getActualReturnDate())
-                ? LocalDate.parse(bookHistoryDto.getActualReturnDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    public BookHistory(UserBookHistoryDto userBookHistoryDto) {
+        this.actualReturnDate = StringUtils.isNotBlank(userBookHistoryDto.getActualReturnDate())
+                ? LocalDate.parse(userBookHistoryDto.getActualReturnDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 : null;
-        this.approvedByUserId = bookHistoryDto.getApprovedByUserId();
-        this.bookHistoryId = bookHistoryDto.getBookHistoryId();
-        this.returnDueDate =StringUtils.isNotBlank(bookHistoryDto.getReturnDueDate())
-                ? LocalDate.parse(bookHistoryDto.getReturnDueDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        this.approvedByUserId = userBookHistoryDto.getApprovedByUserId();
+        this.bookHistoryId = userBookHistoryDto.getUserBookHistoryId();
+        this.returnDueDate =StringUtils.isNotBlank(userBookHistoryDto.getReturnDueDate())
+                ? LocalDate.parse(userBookHistoryDto.getReturnDueDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 : null;
-        this.borrowedBookDate = StringUtils.isNotBlank(bookHistoryDto.getBorrowedBookDate())
-                ? LocalDate.parse(bookHistoryDto.getBorrowedBookDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        this.borrowedBookDate = StringUtils.isNotBlank(userBookHistoryDto.getBorrowedBookDate())
+                ? LocalDate.parse(userBookHistoryDto.getBorrowedBookDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 : null;
-        this.notes = bookHistoryDto.getNotes();
-        this.userId = bookHistoryDto.getUserId();
-        this.bookStatus = bookHistoryDto.getBookStatus();
+        this.notes = userBookHistoryDto.getNotes();
+        this.bookUser = new BookUser(userBookHistoryDto.getBookUserDto());
+        this.bookStatus = userBookHistoryDto.getBookStatus();
     }
 }

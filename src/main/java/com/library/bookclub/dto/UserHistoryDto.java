@@ -4,18 +4,21 @@ import com.library.bookclub.entity.BookHistory;
 import com.library.bookclub.enums.BookStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.format.DateTimeFormatter;
 
+@Getter
 @Setter
 @AllArgsConstructor
-@Getter
-public class BookHistoryDto {
+@NoArgsConstructor
+public class UserHistoryDto {
 
+    private BookUserDto userDto;
     private int bookHistoryId;
     private BookDto bookDto;
-    private BookUserDto bookUserDto;
+    private int userId;
     private String borrowedBookDate;
     private String returnDueDate;
     private String actualReturnDate;
@@ -23,10 +26,10 @@ public class BookHistoryDto {
     private BookStatus bookStatus;
     private String notes;
 
-    public BookHistoryDto(BookHistory bookHistory) {
+    public UserHistoryDto(BookHistory bookHistory) {
+        this.userDto = new BookUserDto(bookHistory.getBookUser());
         this.bookHistoryId = bookHistory.getBookHistoryId();
         this.bookDto = new BookDto(bookHistory.getBook());
-        this.bookUserDto = new BookUserDto(bookHistory.getBookUser());
         this.borrowedBookDate =
                 (bookHistory.getBorrowedBookDate() != null) ? bookHistory.getBorrowedBookDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
         this.approvedByUserId = bookHistory.getApprovedByUserId();

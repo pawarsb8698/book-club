@@ -2,18 +2,14 @@ package com.library.bookclub.dto;
 
 import com.library.bookclub.entity.BookHistory;
 import com.library.bookclub.enums.BookStatus;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.time.format.DateTimeFormatter;
 
-@Setter
-@AllArgsConstructor
 @Getter
-public class BookHistoryDto {
+public class UserBookHistoryDto {
 
-    private int bookHistoryId;
+    private int userBookHistoryId;
     private BookDto bookDto;
     private BookUserDto bookUserDto;
     private String borrowedBookDate;
@@ -23,16 +19,25 @@ public class BookHistoryDto {
     private BookStatus bookStatus;
     private String notes;
 
-    public BookHistoryDto(BookHistory bookHistory) {
-        this.bookHistoryId = bookHistory.getBookHistoryId();
+    public UserBookHistoryDto(BookDto bookDto, Integer approverUserId, BookUserDto bookUserDto) {
+        this.bookDto = bookDto;
+        this.bookUserDto = bookUserDto;
+        this.borrowedBookDate = bookDto.getBorrowedDate();
+        this.returnDueDate = bookDto.getReturnDueDate();
+        this.approvedByUserId = approverUserId;
+        this.bookStatus = BookStatus.valueOf(bookDto.getBookStatus());
+    }
+
+    public UserBookHistoryDto(BookHistory bookHistory) {
         this.bookDto = new BookDto(bookHistory.getBook());
         this.bookUserDto = new BookUserDto(bookHistory.getBookUser());
         this.borrowedBookDate =
                 (bookHistory.getBorrowedBookDate() != null) ? bookHistory.getBorrowedBookDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
+        this.returnDueDate =
+                (bookHistory.getReturnDueDate() != null) ? bookHistory.getReturnDueDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
         this.approvedByUserId = bookHistory.getApprovedByUserId();
         this.actualReturnDate = (bookHistory.getActualReturnDate() != null) ? bookHistory.getActualReturnDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
-        this.approvedByUserId = bookHistory.getApprovedByUserId();
         this.bookStatus = bookHistory.getBookStatus();
-        this.notes = bookHistory.getNotes();
+
     }
 }

@@ -2,7 +2,10 @@ package com.library.bookclub.services;
 
 
 import com.library.bookclub.dto.BookDto;
-import com.library.bookclub.dto.BookHistoryDto;
+import com.library.bookclub.dto.BookUserDto;
+import com.library.bookclub.dto.UserBookHistoryDto;
+import com.library.bookclub.dto.UserHistoryDto;
+import com.library.bookclub.entity.Book;
 import com.library.bookclub.entity.BookHistory;
 import com.library.bookclub.repository.BookHistoryRepository;
 import com.library.bookclub.service.BookService;
@@ -19,20 +22,29 @@ public class BookHistoryService {
     private final BookHistoryRepository bookHistoryRepository;
     private final BookApprovalService bookApprovalService;
     private final BookService bookService;
+    private final UserService userService;
 
     @Transactional
     public void saveBookHistory(BookDto bookDto, Integer approverUserId, int borrowedByUserId) {
-        BookHistoryDto bookHistoryDto = new BookHistoryDto(bookDto, approverUserId, borrowedByUserId);
-        BookHistory bookHistory = new BookHistory(bookHistoryDto);
-        bookHistory.setBorrowedBookId(bookDto.getBookId());
+        BookUserDto bookUserDto = userService.findById(borrowedByUserId);
+        UserBookHistoryDto userBookHistoryDto = new UserBookHistoryDto(bookDto, approverUserId, bookUserDto);
+        BookHistory bookHistory = new BookHistory(userBookHistoryDto);
+        bookHistory.setBook(new Book(bookDto));
         bookService.updateBook(bookDto.getBookId(), bookDto);
         bookHistoryRepository.save(bookHistory);
 
     }
 
-    public List<BookHistoryDto> getBooksByUserId(int userId) {
-        return bookHistoryRepository.findAllByUserId(userId).stream()
-                .map(BookHistoryDto::new)
+    public List<UserBookHistoryDto> getBooksByUserId(int userId) {
+        return bookHistoryRepository.findAllByBookHistoryId(userId).stream()
+                .map(UserBookHistoryDto::new)
                 .collect(Collectors.toList());
+    }
+
+    public List<UserHistoryDto> getHistoryForBook(int bookId) {
+        return bookHistoryRepository.findAllByBook_BookId(bookId)
+                .stream()
+                .map(UserHistoryDto::new)
+                .toList();
     }
 }

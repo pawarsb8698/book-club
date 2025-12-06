@@ -1,33 +1,31 @@
 package com.library.bookclub.entity;
 
-import com.library.bookclub.dtos.UserDto;
+import com.library.bookclub.dto.BookUserDto;
 import com.library.bookclub.enums.UserType;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Entity
-@Table(name = "app_user")
-public class User {
+@Table(name = "book_user")
+public class BookUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "book_user_id")  // PK column
+    private Integer bookUserId;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
     @Column(name = "last_name", nullable = false)
     private String lastName;
-
-    @Column(nullable = false)
-    private String login;
-
-    @Column(nullable = false)
-    private String password;
 
     @Column(name = "user_type", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -36,7 +34,11 @@ public class User {
     @Column(name= "is_available", columnDefinition = "boolean default true")
     private boolean isAvailable;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_user_id")
-    private BookUser bookUser;
+    public BookUser(BookUserDto bookUserDto) {
+        this.bookUserId = bookUserDto.getBookUserId();
+        this.firstName = bookUserDto.getFirstName();
+        this.lastName = bookUserDto.getLastName();
+        this.userType = bookUserDto.getUserType();
+        this.isAvailable = bookUserDto.isAvailable();
+    }
 }

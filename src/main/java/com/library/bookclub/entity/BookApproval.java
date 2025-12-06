@@ -1,7 +1,6 @@
 package com.library.bookclub.entity;
 
 import com.library.bookclub.dto.BookApprovalDto;
-import com.library.bookclub.dto.BookHistoryDto;
 import com.library.bookclub.enums.BookStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

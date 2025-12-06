@@ -1,5 +1,6 @@
 package com.library.bookclub.services;
 
+import com.library.bookclub.dto.BookUserDto;
 import com.library.bookclub.dto.UserListDto;
 import com.library.bookclub.dtos.CredentialsDto;
 import com.library.bookclub.dtos.SignUpDto;
@@ -59,6 +60,12 @@ public class UserService {
         User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new AppException("Unknown user", HttpStatus.NOT_FOUND));
         return userMapper.toUserDto(user);
+    }
+
+    public BookUserDto findById(int userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException("Unknown user", HttpStatus.NOT_FOUND));
+        return new BookUserDto(user.getBookUser());
     }
 
     public List<UserListDto> getAllUsersExceptSuperUser() {

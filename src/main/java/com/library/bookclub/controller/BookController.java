@@ -60,8 +60,7 @@ public class BookController {
     }
 
     @GetMapping
-    public
-    ResponseEntity<BookListResponse> listBooks(
+    public ResponseEntity<BookListResponse> listBooks(
             @RequestParam(defaultValue = "0") int pageNumber,
             @RequestParam(defaultValue = "8") int numberOfBooksPerPage, Authentication authentication) {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
@@ -70,14 +69,14 @@ public class BookController {
         if(bookApprovalDto!=null){
             hasBorrrowedBook = true;
         } else {
-            List<BookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
+            List<UserBookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
             Collections.reverse(userBookHistory);
-            BookHistoryDto bookHistoryDto = userBookHistory.stream()
+            UserBookHistoryDto userBookHistoryDto = userBookHistory.stream()
                     .findFirst()
                     .orElse(null);
-            hasBorrrowedBook = bookHistoryDto != null && (bookHistoryDto.getBookStatus().equals(BookStatus.BORROWED) ||
-                    bookHistoryDto.getBookStatus().equals(BookStatus.RETURN_PENDING) ||
-                    bookHistoryDto.getBookStatus().equals(BookStatus.BORROW_PENDING));
+            hasBorrrowedBook = userBookHistoryDto != null && (userBookHistoryDto.getBookStatus().equals(BookStatus.BORROWED) ||
+                    userBookHistoryDto.getBookStatus().equals(BookStatus.RETURN_PENDING) ||
+                    userBookHistoryDto.getBookStatus().equals(BookStatus.BORROW_PENDING));
         }
         Page<BookDto> books = bookService.getAllBooks(pageNumber, numberOfBooksPerPage);
         return ResponseEntity.ok(new BookListResponse(books, hasBorrrowedBook));
@@ -198,13 +197,13 @@ public class BookController {
         BookApprovalDto bookApprovalDto = bookApprovalService.findByUserId(currentUser.getId());
         BookDto bookDto;
         if (bookApprovalDto == null) {
-            List<BookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
+            List<UserBookHistoryDto> userBookHistory = bookHistoryService.getBooksByUserId(currentUser.getId());
             Collections.reverse(userBookHistory);
-            BookHistoryDto bookHistoryDto = userBookHistory.stream()
+            UserBookHistoryDto userBookHistoryDto = userBookHistory.stream()
                             .findFirst()
                             .filter(history -> !history.getBookStatus().equals(BookStatus.AVAILABLE))
                             .orElse(null);
-            bookDto = bookHistoryDto == null ? null : bookService.getBookById(bookHistoryDto.getBorrowedBookId());
+            bookDto = userBookHistoryDto == null ? null : userBookHistoryDto.getBookDto();
         } else {
             bookDto = bookService.getBookById(bookApprovalDto.getBookId());
         }
@@ -261,8 +260,20 @@ public class BookController {
         return getApprovals();
     }
 
-    public void getUserHistory(Authentication authentication) {
+    @GetMapping("/userHistory/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<UserHistoryDto>> getUserHistoryForBook(Authentication authentication, @PathVariable("id")int bookId) {
+        List<UserHistoryDto> userBookHistoryDtos = bookHistoryService.getHistoryForBook(bookId);
+        return ResponseEntity.ok(userBookHistoryDtos);
+    }
+
+    @GetMapping("/bookHistory/{id}")
+    public ResponseEntity<List<UserBookHistoryDto>> getBooksHistoryForUser(Authentication authentication, @PathVariable("id")int userId) {
         UserDto currentUser = (UserDto) authentication.getPrincipal();
-        List<BookHistoryDto> bookHistoryDtos = bookHistoryService.getBooksByUserId(currentUser.getId());
+        if(userId != currentUser.getId()) {
+            throw new RuntimeException("You do not have access!!!");
+        }
+        List<UserBookHistoryDto> userBookHistoryDtos = bookHistoryService.getBooksByUserId(currentUser.getId());
+        return ResponseEntity.ok(userBookHistoryDtos);
     }
 }
