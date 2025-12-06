@@ -36,7 +36,7 @@ public class BookHistoryService {
     }
 
     public List<UserBookHistoryDto> getBooksByUserId(int userId) {
-        return bookHistoryRepository.findAllByBookHistoryId(userId).stream()
+        return bookHistoryRepository.findAllByBookUser_BookUserId(userId).stream()
                 .map(UserBookHistoryDto::new)
                 .collect(Collectors.toList());
     }
